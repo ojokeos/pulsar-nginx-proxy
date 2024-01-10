@@ -1,44 +1,33 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-reverse-proxy-service
-spec:
-  selector:
-    app: nginx-reverse-proxy
-  ports:
-    - protocol: TCP
-      port: 7071
-      targetPort: 7071
-  type: ClusterIP # Change this as per your requirement (ClusterIP, NodePort, LoadBalancer, etc.)
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-reverse-proxy-deployment
+  name: pulsar-nginx-proxy-deployment
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
-      app: nginx-reverse-proxy
+      app: pulsar-nginx-proxy
   template:
     metadata:
       labels:
-        app: nginx-reverse-proxy
+        app: pulsar-nginx-proxy
     spec:
       containers:
-        - name: nginx-reverse-proxy
-          image: ojoxdan/pulsar-nginx-proxy # Replace with your custom Docker image
+        - name: pulsar-nginx-proxy-container
+          image: ojoxdan/pulsar-nginx-proxy:latest
           ports:
             - containerPort: 7071
-          volumeMounts:
-            - name: nginx-config
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
-      volumes:
-        - name: nginx-config
-          configMap:
-            name: nginx-configmap
-            items:
-              - key: nginx.conf
-                path: nginx.conf
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulsar-nginx-proxy-service
+spec:
+  selector:
+    app: pulsar-nginx-proxy
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 7071
+  type: LoadBalancer
